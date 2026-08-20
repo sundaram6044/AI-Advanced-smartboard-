@@ -27,12 +27,10 @@
       </button>
     </div>
 
-    <div class="grp" id="shapeTools">
-      <button class="tool" data-shape="line" title="Line"><svg viewBox="0 0 24 24"><path d="M4 20L20 4"/></svg></button>
-      <button class="tool" data-shape="rect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></svg></button>
-      <button class="tool" data-shape="circle" title="Circle/Oval"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></button>
-      <button class="tool" data-shape="triangle" title="Triangle"><svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/></svg></button>
-      <button class="tool" data-shape="polygon" title="Polygon (tap points, double-tap to close)"><svg viewBox="0 0 24 24"><path d="M12 3l8 6-3 9H7l-3-9z"/></svg></button>
+    <div class="grp">
+      <button id="shapesBtn" title="Shapes">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><circle cx="17" cy="7" r="4"/><path d="M4 21l4-8 4 8z"/></svg>
+      </button>
     </div>
 
     <div class="grp">
@@ -87,6 +85,26 @@
         <input type="color" id="fullColorPicker" style="position:absolute; width:1px; height:1px; opacity:0;">
       </div>
 
+      <div class="flyout" id="shapesFlyout">
+        <h4>Shape</h4>
+        <div class="styleRow" id="shapeGrid">
+          <button class="styleBtn" data-shape="line" title="Line"><svg viewBox="0 0 24 24"><path d="M4 20L20 4"/></svg><span>Line</span></button>
+          <button class="styleBtn" data-shape="rect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Rect</span></button>
+          <button class="styleBtn" data-shape="circle" title="Circle/Oval"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg><span>Circle</span></button>
+          <button class="styleBtn" data-shape="triangle" title="Triangle"><svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/></svg><span>Triangle</span></button>
+          <button class="styleBtn" data-shape="polygon" title="Polygon (tap points, double-tap to close)"><svg viewBox="0 0 24 24"><path d="M12 3l8 6-3 9H7l-3-9z"/></svg><span>Polygon</span></button>
+        </div>
+        <h4>Line style</h4>
+        <div class="styleRow" id="lineStyleRow">
+          <button class="styleBtn active" data-linestyle="solid">
+            <svg viewBox="0 0 24 24"><path d="M3 12h18"/></svg><span>Solid</span>
+          </button>
+          <button class="styleBtn" data-linestyle="dashed">
+            <svg viewBox="0 0 24 24" stroke-dasharray="4 3"><path d="M3 12h18"/></svg><span>Dashed</span>
+          </button>
+        </div>
+      </div>
+
       <div class="flyout" id="bgFlyout">
         <h4>Background style</h4>
         <button class="bgOption" data-bgtype="blank"><span class="preview" style="background:#fff"></span>Blank</button>
@@ -116,19 +134,35 @@
     <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l1.9 5.3L19 9l-5.1 1.7L12 16l-1.9-5.3L5 9l5.1-1.7L12 2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg>
   </button>
   <div id="aiMenu">
-    <h4>Equation → Graph</h4>
-    <div id="equationPanel" class="open">
+    <div class="aiTabRow">
+      <button class="aiTabBtn active" data-aitab="equation">Equation → Graph</button>
+      <button class="aiTabBtn" data-aitab="notes">Handwriting → Notes</button>
+    </div>
+
+    <div id="equationPanel" class="aiTabPanel open">
       <input type="text" id="equationInput" placeholder="e.g. x^2 - 3, sin(x)*2, 1/x">
       <div class="chipRow" id="chipRow"></div>
       <button id="plotBtn">Plot on board</button>
-      <div id="keySectionToggle">Have a Gemini API key? Scan handwriting instead</div>
-      <div id="keySection">
-        <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
-        <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
-          Scan handwritten equation
-          <span class="small">Drag a box around it after tapping this</span>
-        </button>
-      </div>
+      <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
+        Scan handwritten equation
+        <span class="small">Drag a box around it after tapping this</span>
+      </button>
+    </div>
+
+    <div id="notesPanel" class="aiTabPanel">
+      <textarea id="notesInput" rows="3" placeholder="Type your notes here…"></textarea>
+      <h4 style="margin-top:10px;">Style (pick one)</h4>
+      <div class="fontGrid" id="fontGrid"></div>
+      <button id="placeNoteBtn">Add to board</button>
+      <button class="aiOption" id="aiNotesScanBtn" style="margin-top:8px;">
+        Scan handwriting → clean text
+        <span class="small">Drag a box around your handwriting after tapping this</span>
+      </button>
+    </div>
+
+    <div id="keySectionToggle">Have a Gemini API key? Enable handwriting scanning</div>
+    <div id="keySection">
+      <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
     </div>
   </div>
 
@@ -140,6 +174,7 @@
 <script src="js/drawing-events.js"></script>
 <script src="js/pages.js"></script>
 <script src="js/ai-graph.js"></script>
+<script src="js/notes.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>
