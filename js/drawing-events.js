@@ -45,7 +45,8 @@ function pointerUp(e){
     currentStroke = null;
   } else if(currentTool==='shape'){
     const p = getPos(e);
-    const obj = { type:'shape', shape:currentShape, color: penStyles.pen.color, size: penStyles.pen.size, x1:startPt.x, y1:startPt.y, x2:p.x, y2:p.y };
+    const obj = { type:'shape', shape:currentShape, color: penStyles.pen.color, size: penStyles.pen.size,
+      dashed: shapeLineStyle==='dashed', x1:startPt.x, y1:startPt.y, x2:p.x, y2:p.y };
     if(Math.abs(obj.x2-obj.x1)>3 || Math.abs(obj.y2-obj.y1)>3){ currentPage().objects.push(obj); redoStack=[]; }
     startPt = null; redraw();
   }
@@ -62,7 +63,8 @@ canvas.addEventListener('touchend', pointerUp, {passive:false});
 // Double-tap/click closes an in-progress polygon
 canvas.addEventListener('dblclick', ()=>{
   if(currentTool==='shape' && currentShape==='polygon' && polyPoints.length>2){
-    currentPage().objects.push({ type:'shape', shape:'polygon', color:penStyles.pen.color, size:penStyles.pen.size, points:[...polyPoints] });
+    currentPage().objects.push({ type:'shape', shape:'polygon', color:penStyles.pen.color, size:penStyles.pen.size,
+      dashed: shapeLineStyle==='dashed', points:[...polyPoints] });
     polyPoints=[]; redoStack=[]; redraw(); refreshThumb(pageIndex);
   }
 });
