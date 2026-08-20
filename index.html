@@ -14,38 +14,6 @@
     <div id="status">Pen Studio · Pages · Offline graphing</div>
   </div>
 
-  <div id="toolbar">
-    <div class="grp" id="drawTools">
-      <button id="penStudioBtn" title="Pen Studio">
-        <span id="penPreviewDot"></span>
-      </button>
-      <button class="tool warn" data-tool="eraser" title="Eraser">
-        <svg viewBox="0 0 24 24"><path d="M20 20H8l-6-6 10-10 8 8z"/><path d="M6 12l7 7"/></svg>
-      </button>
-      <button class="tool" data-tool="select" title="Select / Move">
-        <svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg>
-      </button>
-    </div>
-
-    <div class="grp">
-      <button id="shapesBtn" title="Shapes">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><circle cx="17" cy="7" r="4"/><path d="M4 21l4-8 4 8z"/></svg>
-      </button>
-    </div>
-
-    <div class="grp">
-      <button class="tool" id="bgBtn" title="Background">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>
-      </button>
-    </div>
-
-    <div class="grp">
-      <button class="tool" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
-      <button class="tool" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg></button>
-      <button class="tool" id="clearBtn" title="Clear this page"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
-    </div>
-  </div>
-
   <div id="canvasArea">
     <div id="canvasWrap">
       <canvas id="bgCanvas"></canvas>
@@ -123,47 +91,92 @@
 
       <div id="hint">Draw freely, add pages below, or tap the purple AI button for equation graphing.</div>
       <div id="toast"></div>
+
+      <button id="aiFab" title="AI tools">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l1.9 5.3L19 9l-5.1 1.7L12 16l-1.9-5.3L5 9l5.1-1.7L12 2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg>
+      </button>
+      <div id="aiMenu">
+        <div class="aiTabRow">
+          <button class="aiTabBtn active" data-aitab="equation">Equation → Graph</button>
+          <button class="aiTabBtn" data-aitab="notes">Handwriting → Notes</button>
+        </div>
+
+        <div id="equationPanel" class="aiTabPanel open">
+          <input type="text" id="equationInput" placeholder="e.g. x^2 - 3, sin(x)*2, 1/x">
+          <div class="chipRow" id="chipRow"></div>
+          <button id="plotBtn">Plot on board</button>
+          <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
+            Scan handwritten equation
+            <span class="small">Drag a box around it after tapping this</span>
+          </button>
+        </div>
+
+        <div id="notesPanel" class="aiTabPanel">
+          <textarea id="notesInput" rows="3" placeholder="Type your notes here…"></textarea>
+          <h4 style="margin-top:10px;">Style (pick one)</h4>
+          <div class="fontGrid" id="fontGrid"></div>
+          <button id="placeNoteBtn">Add to board</button>
+          <button class="aiOption" id="aiNotesScanBtn" style="margin-top:8px;">
+            Scan handwriting → clean text
+            <span class="small">Drag a box around your handwriting after tapping this</span>
+          </button>
+        </div>
+
+        <div id="keySectionToggle">Have a Gemini API key? Enable handwriting scanning</div>
+        <div id="keySection">
+          <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toolbar">
+    <div class="grp" id="drawTools">
+      <button id="penStudioBtn" title="Pen Studio">
+        <span id="penPreviewDot"></span>
+      </button>
+      <button class="tool warn" data-tool="eraser" title="Eraser">
+        <svg viewBox="0 0 24 24"><path d="M20 20H8l-6-6 10-10 8 8z"/><path d="M6 12l7 7"/></svg>
+      </button>
+      <button class="tool" data-tool="select" title="Select / Move — drag any drawing to reposition it">
+        <svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="grp">
+      <button id="shapesBtn" title="Shapes">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><circle cx="17" cy="7" r="4"/><path d="M4 21l4-8 4 8z"/></svg>
+      </button>
+    </div>
+
+    <div class="grp">
+      <button class="tool" id="bgBtn" title="Background">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="grp">
+      <button class="tool" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+      <button class="tool" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg></button>
+      <button class="tool" id="clearBtn" title="Clear this page"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
     </div>
   </div>
 
   <div id="pageStrip">
+    <button id="prevPageBtn" class="pageNavBtn" title="Previous page">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button id="nextPageBtn" class="pageNavBtn" title="Next page">
+      <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <div id="pageThumbTrack"></div>
     <button id="addPageBtn" title="Add page">+</button>
-  </div>
-
-  <button id="aiFab" title="AI tools">
-    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l1.9 5.3L19 9l-5.1 1.7L12 16l-1.9-5.3L5 9l5.1-1.7L12 2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg>
-  </button>
-  <div id="aiMenu">
-    <div class="aiTabRow">
-      <button class="aiTabBtn active" data-aitab="equation">Equation → Graph</button>
-      <button class="aiTabBtn" data-aitab="notes">Handwriting → Notes</button>
-    </div>
-
-    <div id="equationPanel" class="aiTabPanel open">
-      <input type="text" id="equationInput" placeholder="e.g. x^2 - 3, sin(x)*2, 1/x">
-      <div class="chipRow" id="chipRow"></div>
-      <button id="plotBtn">Plot on board</button>
-      <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
-        Scan handwritten equation
-        <span class="small">Drag a box around it after tapping this</span>
-      </button>
-    </div>
-
-    <div id="notesPanel" class="aiTabPanel">
-      <textarea id="notesInput" rows="3" placeholder="Type your notes here…"></textarea>
-      <h4 style="margin-top:10px;">Style (pick one)</h4>
-      <div class="fontGrid" id="fontGrid"></div>
-      <button id="placeNoteBtn">Add to board</button>
-      <button class="aiOption" id="aiNotesScanBtn" style="margin-top:8px;">
-        Scan handwriting → clean text
-        <span class="small">Drag a box around your handwriting after tapping this</span>
-      </button>
-    </div>
-
-    <div id="keySectionToggle">Have a Gemini API key? Enable handwriting scanning</div>
-    <div id="keySection">
-      <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
-    </div>
+    <button id="duplicatePageBtn" class="pageNavBtn" title="Duplicate this page">
+      <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
+    </button>
+    <button id="exportPageBtn" class="pageNavBtn" title="Save this page as an image">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+    </button>
   </div>
 
 </div>
