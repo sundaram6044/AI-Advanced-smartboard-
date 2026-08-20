@@ -1,15 +1,20 @@
 /* ===================================================================
    pages.js
-   The page/slide strip at the bottom: add, delete, switch pages,
-   and paint the little thumbnail preview for each one.
-   Edit THIS file for: multi-page behavior, thumbnails.
+   The page/slide strip at the bottom: add, delete, duplicate, export,
+   and step through pages, plus painting each thumbnail preview.
+   Edit THIS file for: multi-page behavior, thumbnails, page controls.
    =================================================================== */
 
 const pageStrip = document.getElementById('pageStrip');
+const pageThumbTrack = document.getElementById('pageThumbTrack');
 const addPageBtn = document.getElementById('addPageBtn');
+const prevPageBtn = document.getElementById('prevPageBtn');
+const nextPageBtn = document.getElementById('nextPageBtn');
+const duplicatePageBtn = document.getElementById('duplicatePageBtn');
+const exportPageBtn = document.getElementById('exportPageBtn');
 
 function renderPageStrip(){
-  pageStrip.querySelectorAll('.pageThumb').forEach(el=>el.remove());
+  pageThumbTrack.querySelectorAll('.pageThumb').forEach(el=>el.remove());
   pages.forEach((pg,i)=>{
     const thumb = document.createElement('div');
     thumb.className = 'pageThumb'+(i===pageIndex?' active':'');
@@ -22,13 +27,16 @@ function renderPageStrip(){
       thumb.appendChild(del);
     }
     thumb.addEventListener('click', ()=> switchPage(i));
-    pageStrip.insertBefore(thumb, addPageBtn);
+    pageThumbTrack.appendChild(thumb);
     paintThumb(i);
   });
+  // keep the active thumbnail scrolled into view
+  const activeThumb = pageThumbTrack.querySelectorAll('.pageThumb')[pageIndex];
+  if(activeThumb) activeThumb.scrollIntoView({inline:'nearest', block:'nearest'});
 }
 
 function paintThumb(i){
-  const thumb = pageStrip.querySelectorAll('.pageThumb')[i]; if(!thumb) return;
+  const thumb = pageThumbTrack.querySelectorAll('.pageThumb')[i]; if(!thumb) return;
   const tCanvas = thumb.querySelector('canvas'); const tctx = tCanvas.getContext('2d');
   const pg = pages[i]; const w=tCanvas.width, h=tCanvas.height;
   tctx.clearRect(0,0,w,h); tctx.fillStyle = pg.background.color||'#FFFFFF'; tctx.fillRect(0,0,w,h);
@@ -80,4 +88,50 @@ function deletePage(i){
 addPageBtn.addEventListener('click', ()=>{
   pages.push(newPage()); pageIndex=pages.length-1;
   redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+});
+
+// ---------------- Prev / Next quick navigation ----------------
+prevPageBtn.addEventListener('click', ()=>{
+  if(pageIndex>0) switchPage(pageIndex-1);
+});
+nextPageBtn.addEventListener('click', ()=>{
+  if(pageIndex<pages.length-1) switchPage(pageIndex+1);
+});
+
+// ---------------- Duplicate current page ----------------
+// Deep-copies coordinates/points (so moving a shape on the copy never
+// affects the original) but graph objects keep sharing their compiled
+// function — functions can't be cloned and don't need to be, they're pure.
+function clonePageObjects(objects){
+  return objects.map(o=>{
+    const copy = { ...o };
+    if(o.points) copy.points = o.points.map(pt=>({ ...pt }));
+    return copy;
+  });
+}
+duplicatePageBtn.addEventListener('click', ()=>{
+  const src = currentPage();
+  const copy = {
+    objects: clonePageObjects(src.objects),
+    background: { ...src.background }
+  };
+  pages.splice(pageIndex+1, 0, copy);
+  pageIndex = pageIndex+1;
+  redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+  showToast('Page duplicated.', 2000);
+});
+
+// ---------------- Export current page as a PNG image ----------------
+exportPageBtn.addEventListener('click', ()=>{
+  const w = bgCanvas.width, h = bgCanvas.height;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  octx.drawImage(bgCanvas, 0, 0);
+  octx.drawImage(canvas, 0, 0);
+  const link = document.createElement('a');
+  link.download = 'smartboard-page-' + (pageIndex+1) + '.png';
+  link.href = out.toDataURL('image/png');
+  link.click();
+  showToast('Page saved as an image.', 2000);
 });
