@@ -48,7 +48,7 @@ styleRow.addEventListener('click', e=>{
   currentTool = btn.dataset.style; currentShape = null;
   document.querySelectorAll('.styleBtn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('#shapeTools .tool').forEach(b=>b.classList.remove('active'));
+  shapesBtn.classList.remove('active');
   penStudioBtn.classList.add('active');
   refreshPenUI();
   hideHint();
@@ -61,7 +61,7 @@ penSizeSlider.addEventListener('input', e=>{
 penStudioBtn.addEventListener('click', ()=>{
   exitAiSelectMode();
   if(!['pen','brush','highlighter','marker'].includes(currentTool)){ currentTool = 'pen'; }
-  document.querySelectorAll('#shapeTools .tool').forEach(b=>b.classList.remove('active'));
+  shapesBtn.classList.remove('active');
   penStudioBtn.classList.add('active');
   document.querySelectorAll('.styleBtn').forEach(b=> b.classList.toggle('active', b.dataset.style===currentTool));
   refreshPenUI();
@@ -78,20 +78,40 @@ document.getElementById('drawTools').addEventListener('click', e=>{
   document.querySelectorAll('#drawTools .tool[data-tool]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   penStudioBtn.classList.remove('active');
-  document.querySelectorAll('#shapeTools .tool').forEach(b=>b.classList.remove('active'));
+  shapesBtn.classList.remove('active');
   hideHint();
 });
 
-// ---------------- Shape tools ----------------
-document.getElementById('shapeTools').addEventListener('click', e=>{
-  const btn = e.target.closest('[data-shape]'); if(!btn) return;
+// ---------------- Shapes (consolidated single panel) ----------------
+const shapesBtn = document.getElementById('shapesBtn');
+const shapesFlyout = document.getElementById('shapesFlyout');
+const shapeGrid = document.getElementById('shapeGrid');
+const lineStyleRow = document.getElementById('lineStyleRow');
+
+shapesBtn.addEventListener('click', ()=>{
   exitAiSelectMode();
+  closeAllFlyouts('shapesFlyout');
+  shapesFlyout.classList.toggle('open');
+  hideHint();
+});
+
+shapeGrid.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-shape]'); if(!btn) return;
   currentTool = 'shape'; currentShape = btn.dataset.shape;
-  document.querySelectorAll('#shapeTools .tool').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#shapeGrid .styleBtn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  shapesBtn.classList.add('active');
   penStudioBtn.classList.remove('active');
   document.querySelectorAll('#drawTools .tool[data-tool]').forEach(b=>b.classList.remove('active'));
   hideHint();
+});
+
+// Solid vs Dashed — applies to the next shape you draw
+lineStyleRow.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-linestyle]'); if(!btn) return;
+  shapeLineStyle = btn.dataset.linestyle;
+  document.querySelectorAll('#lineStyleRow .styleBtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 });
 
 // ---------------- Background flyout ----------------
@@ -127,3 +147,4 @@ bgFileInput.addEventListener('change', e=>{
   };
   reader.readAsDataURL(file); bgFileInput.value='';
 });
+
