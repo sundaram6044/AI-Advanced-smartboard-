@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Sundaram Industries — SmartBoard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div id="brand"><span class="dot"></span>SmartBoard <span class="sub">— Sundaram Industries</span></div>
+    <div id="status">Pen Studio · Pages · Offline graphing</div>
+  </div>
+
+  <div id="toolbar">
+    <div class="grp" id="drawTools">
+      <button id="penStudioBtn" title="Pen Studio">
+        <span id="penPreviewDot"></span>
+      </button>
+      <button class="tool warn" data-tool="eraser" title="Eraser">
+        <svg viewBox="0 0 24 24"><path d="M20 20H8l-6-6 10-10 8 8z"/><path d="M6 12l7 7"/></svg>
+      </button>
+      <button class="tool" data-tool="select" title="Select / Move">
+        <svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="grp" id="shapeTools">
+      <button class="tool" data-shape="line" title="Line"><svg viewBox="0 0 24 24"><path d="M4 20L20 4"/></svg></button>
+      <button class="tool" data-shape="rect" title="Rectangle"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></svg></button>
+      <button class="tool" data-shape="circle" title="Circle/Oval"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></button>
+      <button class="tool" data-shape="triangle" title="Triangle"><svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/></svg></button>
+      <button class="tool" data-shape="polygon" title="Polygon (tap points, double-tap to close)"><svg viewBox="0 0 24 24"><path d="M12 3l8 6-3 9H7l-3-9z"/></svg></button>
+    </div>
+
+    <div class="grp">
+      <button class="tool" id="bgBtn" title="Background">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="grp">
+      <button class="tool" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+      <button class="tool" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg></button>
+      <button class="tool" id="clearBtn" title="Clear this page"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+    </div>
+  </div>
+
+  <div id="canvasArea">
+    <div id="canvasWrap">
+      <canvas id="bgCanvas"></canvas>
+      <canvas id="board"></canvas>
+      <div id="aiSelectBox"></div>
+
+      <div class="flyout" id="penFlyout">
+        <h4>Pen style</h4>
+        <div class="styleRow" id="styleRow">
+          <button class="styleBtn active" data-style="pen">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span>Pen</span>
+          </button>
+          <button class="styleBtn" data-style="brush">
+            <svg viewBox="0 0 24 24"><path d="M9 21c-1 0-2-1-2-2 3-1 3-4 3-6L18 5l1 1-8 8c0 2-1 5-2 7z"/><path d="M14 4l6 6"/></svg>
+            <span>Brush</span>
+          </button>
+          <button class="styleBtn" data-style="highlighter">
+            <svg viewBox="0 0 24 24"><path d="M6 20h12"/><path d="M3 15l6-6 6 6-3 3H6z"/><path d="M9 9l6-6 3 3-6 6"/></svg>
+            <span>Highlight</span>
+          </button>
+          <button class="styleBtn" data-style="marker">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="8" rx="1"/><path d="M10 11l-2 10h8l-2-10z"/></svg>
+            <span>Marker</span>
+          </button>
+        </div>
+
+        <h4>Thickness</h4>
+        <div id="thicknessRow">
+          <input type="range" id="penSizeSlider" min="1" max="50" value="4">
+          <div id="thicknessPreviewWrap"><div id="thicknessPreviewDot"></div></div>
+        </div>
+
+        <h4>Colors</h4>
+        <div class="swatchRow" id="penSwatchRow"></div>
+        <button class="rainbowSwatch" id="fullColorBtn" title="All colors"><span>+</span></button>
+        <input type="color" id="fullColorPicker" style="position:absolute; width:1px; height:1px; opacity:0;">
+      </div>
+
+      <div class="flyout" id="bgFlyout">
+        <h4>Background style</h4>
+        <button class="bgOption" data-bgtype="blank"><span class="preview" style="background:#fff"></span>Blank</button>
+        <button class="bgOption" data-bgtype="ruled"><span class="preview" style="background:repeating-linear-gradient(#fff 0 6px,#ccc 6px 7px)"></span>Ruled lines</button>
+        <button class="bgOption" data-bgtype="grid"><span class="preview" style="background-image:linear-gradient(#ccc 1px,transparent 1px),linear-gradient(90deg,#ccc 1px,transparent 1px);background-size:6px 6px;background-color:#fff"></span>Grid</button>
+        <button class="bgOption" data-bgtype="dotted"><span class="preview" style="background-image:radial-gradient(#999 1px,transparent 1px);background-size:6px 6px;background-color:#fff"></span>Dotted</button>
+        <h4 style="margin-top:10px;">Background color</h4>
+        <div class="bgSwatchGrid" id="bgSwatchGrid"></div>
+        <h4>Custom image</h4>
+        <button class="bgOption" id="uploadBgBtn">
+          <span class="preview" style="display:flex;align-items:center;justify-content:center;background:#333;color:#fff;font-size:10px;">IMG</span>
+          Upload photo as background
+        </button>
+        <input type="file" id="bgFileInput" accept="image/*" style="display:none;">
+      </div>
+
+      <div id="hint">Draw freely, add pages below, or tap the purple AI button for equation graphing.</div>
+      <div id="toast"></div>
+    </div>
+  </div>
+
+  <div id="pageStrip">
+    <button id="addPageBtn" title="Add page">+</button>
+  </div>
+
+  <button id="aiFab" title="AI tools">
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l1.9 5.3L19 9l-5.1 1.7L12 16l-1.9-5.3L5 9l5.1-1.7L12 2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg>
+  </button>
+  <div id="aiMenu">
+    <h4>Equation → Graph</h4>
+    <div id="equationPanel" class="open">
+      <input type="text" id="equationInput" placeholder="e.g. x^2 - 3, sin(x)*2, 1/x">
+      <div class="chipRow" id="chipRow"></div>
+      <button id="plotBtn">Plot on board</button>
+      <div id="keySectionToggle">Have a Gemini API key? Scan handwriting instead</div>
+      <div id="keySection">
+        <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
+        <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
+          Scan handwritten equation
+          <span class="small">Drag a box around it after tapping this</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Load order matters: core defines shared state, later files use it -->
+<script src="js/core.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/drawing-events.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/ai-graph.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
