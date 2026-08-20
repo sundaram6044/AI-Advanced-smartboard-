@@ -66,6 +66,19 @@ function updateAiSelectBox(p1,p2){
   aiSelectBox.style.width=w+'px'; aiSelectBox.style.height=h+'px';
 }
 
+// Crops the current page (background + strokes) inside the given box to a
+// small offscreen canvas and returns it as a base64 PNG. Shared by both the
+// equation-scan and notes-scan features.
+function cropBoardToBase64(left, top, w, h){
+  const dpr = window.devicePixelRatio||1;
+  const crop = document.createElement('canvas');
+  crop.width = w*dpr; crop.height = h*dpr;
+  const cctx = crop.getContext('2d');
+  cctx.drawImage(bgCanvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
+  cctx.drawImage(canvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
+  return crop.toDataURL('image/png').split(',')[1];
+}
+
 async function finishAiSelect(p1,p2){
   exitAiSelectMode();
   const left=Math.min(p1.x,p2.x), top=Math.min(p1.y,p2.y), w=Math.abs(p2.x-p1.x), h=Math.abs(p2.y-p1.y);
@@ -78,14 +91,26 @@ async function finishAiSelect(p1,p2){
     return;
   }
 
-  // OCR path (optional, needs key)
-  const dpr = window.devicePixelRatio||1;
-  const crop = document.createElement('canvas');
-  crop.width = w*dpr; crop.height = h*dpr;
-  const cctx = crop.getContext('2d');
-  cctx.drawImage(bgCanvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
-  cctx.drawImage(canvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
-  const base64 = crop.toDataURL('image/png').split(',')[1];
+  if(aiSelectPurpose==='note'){
+    placeNoteObject(left, top, w, h);
+    return;
+  }
+
+  if(aiSelectPurpose==='noteOcr'){
+    const base64 = cropBoardToBase64(left, top, w, h);
+    showToast('Reading your handwriting…', 60000);
+    try{
+      const text = await recognizeHandwritingText(base64);
+      placeNoteObject(left, top, w, h, text);
+      showToast('Recognized text added.', 2500);
+    }catch(err){
+      showToast('Scan failed (' + err.message + '). Try typing your note instead.', 4500);
+    }
+    return;
+  }
+
+  // aiSelectPurpose === 'ocr' — equation photo scan (optional, needs key)
+  const base64 = cropBoardToBase64(left, top, w, h);
   showToast('Reading your equation…', 60000);
   try{
     const expr = await recognizeEquation(base64);
