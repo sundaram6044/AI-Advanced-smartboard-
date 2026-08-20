@@ -25,10 +25,7 @@ const BG_COLORS = ['#FFFFFF','#F7F3E9','#E8F0FE','#111318','#0B3D2E','#1B1F3B'];
 let redoStack = [];
 let currentTool = 'pen';       // pen | brush | highlighter | marker | eraser | select | shape
 let currentShape = null;
-let drawing = false;
-let currentStroke = null;
-let polyPoints = [];
-let startPt = null;
+let polyPoints = [];           // polygon is a tap-sequence tool, kept single-touch on purpose
 
 // AI equation-graphing state (used by ai-graph.js)
 let aiSelectMode = false;
