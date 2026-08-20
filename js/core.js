@@ -45,6 +45,25 @@ const penStyles = {
 };
 function activeStyle(){ return penStyles[currentTool] || penStyles.pen; }
 
+// Line style applied to the NEXT shape you draw — 'solid' or 'dashed'
+let shapeLineStyle = 'solid';
+
+// Font style for the Notes feature (10 offline-safe combinations — no
+// internet/CDN needed, so this keeps working even with no connectivity).
+const NOTE_FONTS = [
+  { id:'script',      label:'Script',      css:"italic 400 1em 'Brush Script MT', cursive" },
+  { id:'scriptBold',  label:'Bold Script', css:"italic 700 1em 'Brush Script MT', cursive" },
+  { id:'italicSerif', label:'Italic',      css:"italic 400 1em Georgia, 'Times New Roman', serif" },
+  { id:'serif',       label:'Classic',     css:"normal 400 1em Georgia, 'Times New Roman', serif" },
+  { id:'serifBold',   label:'Formal Bold', css:"normal 700 1em Georgia, 'Times New Roman', serif" },
+  { id:'sans',        label:'Modern',      css:"normal 400 1em 'Segoe UI', Arial, sans-serif" },
+  { id:'sansItalic',  label:'Italic Sans', css:"italic 400 1em 'Segoe UI', Arial, sans-serif" },
+  { id:'sansBold',    label:'Bold Notes',  css:"normal 700 1em 'Segoe UI', Arial, sans-serif" },
+  { id:'rounded',      label:'Friendly',    css:"normal 400 1em ui-rounded, 'Segoe UI', sans-serif" },
+  { id:'mono',        label:'Typewriter',  css:"normal 400 1em 'Courier New', monospace" }
+];
+function findNoteFont(id){ return NOTE_FONTS.find(f=>f.id===id) || NOTE_FONTS[3]; }
+
 // ---------- Canvas sizing ----------
 function resize(){
   const r = wrap.getBoundingClientRect();
@@ -126,9 +145,11 @@ function drawStroke(s){
 
 function drawShapeObj(o){
   ctx.save(); ctx.strokeStyle=o.color; ctx.lineWidth=o.size; ctx.lineJoin='round';
+  ctx.setLineDash(o.dashed ? [o.size*2.2, o.size*1.6] : []);
   if(o.shape==='polygon'){
     ctx.beginPath(); o.points.forEach((pt,i)=> i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y)); ctx.closePath(); ctx.stroke();
   } else if(o.type==='graph'){ drawGraphObj(o);
+  } else if(o.type==='note'){ drawNoteObj(o);
   } else { drawGeoShape(o.shape, o.x1,o.y1,o.x2,o.y2); }
   ctx.restore();
 }
@@ -146,9 +167,43 @@ function drawGeoShape(shape,x1,y1,x2,y2){
   ctx.stroke();
 }
 
+// Live preview while dragging out a new shape — matches the style it will
+// actually be drawn in (solid or dashed, per the Shapes panel toggle),
+// just slightly transparent so it visually reads as "still in progress".
 function drawShapePreview(p1,p2){
-  ctx.save(); ctx.strokeStyle=penStyles.pen.color; ctx.lineWidth=penStyles.pen.size; ctx.setLineDash([6,4]);
+  ctx.save(); ctx.strokeStyle=penStyles.pen.color; ctx.lineWidth=penStyles.pen.size;
+  ctx.globalAlpha = 0.6;
+  ctx.setLineDash(shapeLineStyle==='dashed' ? [penStyles.pen.size*2.2, penStyles.pen.size*1.6] : []);
   drawGeoShape(currentShape,p1.x,p1.y,p2.x,p2.y); ctx.restore();
+}
+
+// Renders a placed Notes text object, word-wrapped inside its box, in the chosen font.
+function drawNoteObj(o){
+  const left = Math.min(o.x1,o.x2), top = Math.min(o.y1,o.y2);
+  const w = Math.abs(o.x2-o.x1), h = Math.abs(o.y2-o.y1);
+  const fontDef = findNoteFont(o.fontId);
+  const fontPx = Math.max(14, Math.min(40, w/14));
+  ctx.save();
+  ctx.fillStyle = o.color || '#111318';
+  ctx.font = fontDef.css.replace('1em', fontPx+'px');
+  ctx.textBaseline = 'top';
+
+  const words = (o.text||'').split(/\s+/);
+  const lines = [];
+  let line = '';
+  words.forEach(word=>{
+    const test = line ? line+' '+word : word;
+    if(ctx.measureText(test).width > w-8 && line){ lines.push(line); line = word; }
+    else { line = test; }
+  });
+  if(line) lines.push(line);
+
+  const lineHeight = fontPx*1.35;
+  lines.forEach((ln,i)=>{
+    const y = top + 4 + i*lineHeight;
+    if(y < top+h) ctx.fillText(ln, left+4, y);
+  });
+  ctx.restore();
 }
 
 function drawPolygonPreview(){
@@ -196,3 +251,4 @@ function redraw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   currentPage().objects.forEach(o=>{ if(o.type==='stroke') drawStroke(o); else drawShapeObj(o); });
 }
+
