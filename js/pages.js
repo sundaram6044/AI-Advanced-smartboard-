@@ -45,6 +45,9 @@ function paintThumb(i){
       tctx.beginPath(); o.points.forEach((pt,idx)=> idx===0?tctx.moveTo(pt.x*sx,pt.y*sy):tctx.lineTo(pt.x*sx,pt.y*sy)); tctx.stroke();
     } else if(o.type==='graph'){
       tctx.beginPath(); tctx.moveTo(o.x1*sx,(o.y1+o.y2)/2*sy); tctx.lineTo(o.x2*sx,(o.y1+o.y2)/2*sy); tctx.stroke();
+    } else if(o.type==='note'){
+      tctx.fillStyle = o.color; tctx.font = (10*sy)+'px sans-serif';
+      tctx.fillText((o.text||'').slice(0,14), o.x1*sx+2, (o.y1)*sy+10*sy);
     } else if(o.shape==='polygon'){
       tctx.beginPath(); o.points.forEach((pt,idx)=> idx===0?tctx.moveTo(pt.x*sx,pt.y*sy):tctx.lineTo(pt.x*sx,pt.y*sy)); tctx.closePath(); tctx.stroke();
     } else {
