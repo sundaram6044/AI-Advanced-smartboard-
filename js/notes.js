@@ -17,14 +17,16 @@ const aiNotesScanBtn = document.getElementById('aiNotesScanBtn');
 let selectedFontId = 'serif';
 let pendingNoteText = '';
 
-// Tab switching between "Equation → Graph" and "Handwriting → Notes"
+// Tab switching across all AI panels (Equation / Notes / Sketch → 3D).
+// Generic by design — each tab's data-aitab value maps to "<value>Panel".
 aiTabBtns.forEach(btn=>{
   btn.addEventListener('click', ()=>{
     aiTabBtns.forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.aitab;
-    equationPanel.classList.toggle('open', tab==='equation');
-    notesPanel.classList.toggle('open', tab==='notes');
+    document.querySelectorAll('.aiTabPanel').forEach(panel=>{
+      panel.classList.toggle('open', panel.id === tab+'Panel');
+    });
   });
 });
 
