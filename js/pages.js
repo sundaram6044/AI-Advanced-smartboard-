@@ -32,7 +32,7 @@ function renderPageStrip(){
   });
   // keep the active thumbnail scrolled into view
   const activeThumb = pageThumbTrack.querySelectorAll('.pageThumb')[pageIndex];
-  if(activeThumb) activeThumb.scrollIntoView({inline:'nearest', block:'nearest'});
+  if(activeThumb && activeThumb.scrollIntoView) activeThumb.scrollIntoView({inline:'nearest', block:'nearest'});
 }
 
 function paintThumb(i){
@@ -56,6 +56,8 @@ function paintThumb(i){
     } else if(o.type==='note'){
       tctx.fillStyle = o.color; tctx.font = (10*sy)+'px sans-serif';
       tctx.fillText((o.text||'').slice(0,14), o.x1*sx+2, (o.y1)*sy+10*sy);
+    } else if(o.type==='model3d'){
+      if(o.image) tctx.drawImage(o.image, Math.min(o.x1,o.x2)*sx, Math.min(o.y1,o.y2)*sy, Math.abs(o.x2-o.x1)*sx, Math.abs(o.y2-o.y1)*sy);
     } else if(o.shape==='polygon'){
       tctx.beginPath(); o.points.forEach((pt,idx)=> idx===0?tctx.moveTo(pt.x*sx,pt.y*sy):tctx.lineTo(pt.x*sx,pt.y*sy)); tctx.closePath(); tctx.stroke();
     } else {
