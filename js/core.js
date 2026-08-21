@@ -31,6 +31,9 @@ let polyPoints = [];           // polygon is a tap-sequence tool, kept single-to
 let aiSelectMode = false;
 let aiSelectPurpose = 'typed'; // 'typed' or 'ocr'
 let pendingExprFn = null, pendingExprText = '';
+
+// Sketch → 3D capture state (see js/sketch3d.js)
+let sketch3dMode = false;
 let geminiKey = '';
 
 // Each pen style remembers its own last color + thickness
@@ -147,6 +150,7 @@ function drawShapeObj(o){
     ctx.beginPath(); o.points.forEach((pt,i)=> i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y)); ctx.closePath(); ctx.stroke();
   } else if(o.type==='graph'){ drawGraphObj(o);
   } else if(o.type==='note'){ drawNoteObj(o);
+  } else if(o.type==='model3d'){ drawModel3DObj(o);
   } else { drawGeoShape(o.shape, o.x1,o.y1,o.x2,o.y2); }
   ctx.restore();
 }
@@ -244,8 +248,29 @@ function drawGraphObj(o){
   ctx.restore();
 }
 
+// Live preview while freehand-sketching a shape for the Sketch → 3D feature.
+// Drawn in the AI purple so it's visually distinct from normal pen strokes.
+function drawSketch3DPreview(points){
+  if(points.length<2) return;
+  ctx.save();
+  ctx.strokeStyle = '#8E44AD'; ctx.lineWidth = 3; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.setLineDash([8,5]);
+  ctx.beginPath();
+  points.forEach((pt,i)=> i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y));
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A placed Sketch → 3D result: a snapshot image of the rendered 3D object,
+// dropped into the board at the outline's original position.
+function drawModel3DObj(o){
+  if(!o.image) return;
+  const left = Math.min(o.x1,o.x2), top = Math.min(o.y1,o.y2);
+  const w = Math.abs(o.x2-o.x1), h = Math.abs(o.y2-o.y1);
+  ctx.drawImage(o.image, left, top, w, h);
+}
+
 function redraw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   currentPage().objects.forEach(o=>{ if(o.type==='stroke') drawStroke(o); else drawShapeObj(o); });
 }
-
