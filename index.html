@@ -99,6 +99,7 @@
         <div class="aiTabRow">
           <button class="aiTabBtn active" data-aitab="equation">Equation → Graph</button>
           <button class="aiTabBtn" data-aitab="notes">Handwriting → Notes</button>
+          <button class="aiTabBtn" data-aitab="sketch3d">Sketch → 3D</button>
         </div>
 
         <div id="equationPanel" class="aiTabPanel open">
@@ -120,6 +121,12 @@
             Scan handwriting → clean text
             <span class="small">Drag a box around your handwriting after tapping this</span>
           </button>
+        </div>
+
+        <div id="sketch3dPanel" class="aiTabPanel">
+          <p class="panelHint">Draw any closed outline on the board — a doodle, a rough polygon, anything — then tap below. It doesn't need to be a recognized shape.</p>
+          <button id="startSketch3DBtn">Start sketching</button>
+          <p class="panelHint" id="sketch3dStatus"></p>
         </div>
 
         <div id="keySectionToggle">Have a Gemini API key? Enable handwriting scanning</div>
@@ -179,6 +186,26 @@
     </button>
   </div>
 
+  <div id="sketch3dModal">
+    <div id="sketch3dModalInner">
+      <div id="sketch3dViewportWrap">
+        <canvas id="sketch3dCanvas"></canvas>
+        <div id="sketch3dLoading">Loading 3D engine…</div>
+      </div>
+      <div id="sketch3dControls">
+        <h4>Depth</h4>
+        <input type="range" id="extrudeDepthSlider" min="4" max="120" value="36">
+        <h4>Color</h4>
+        <div class="swatchRow" id="model3dSwatchRow"></div>
+        <p class="panelHint">Drag the shape to rotate it.</p>
+        <div id="sketch3dButtonRow">
+          <button id="cancelSketch3DBtn">Cancel</button>
+          <button id="placeModel3DBtn">Place on board</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Load order matters: core defines shared state, later files use it -->
@@ -188,6 +215,7 @@
 <script src="js/pages.js"></script>
 <script src="js/ai-graph.js"></script>
 <script src="js/notes.js"></script>
+<script src="js/sketch3d.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>
