@@ -164,4 +164,26 @@ canvas{position:absolute; top:0; left:0; touch-action:none;}
   border:1px solid var(--edge); color:var(--text); padding:8px 14px; border-radius:8px; font-size:12px;
   z-index:40; display:none; max-width:85%; text-align:center;}
 
+/* Sketch → 3D panel + modal viewer */
+.panelHint{font-size:12px; color:var(--muted); line-height:1.5; margin:0 0 10px;}
+#startSketch3DBtn{width:100%; background:var(--accent); border:none; color:#fff; border-radius:8px; padding:9px;
+  font-size:13px; font-weight:600; cursor:pointer;}
+#sketch3dStatus{margin-top:8px; text-align:center;}
+
+#sketch3dModal{position:absolute; inset:0; background:rgba(6,7,10,.92); z-index:60; display:none;
+  align-items:center; justify-content:center; flex-direction:column;}
+#sketch3dModal.open{display:flex;}
+#sketch3dModalInner{width:100%; height:100%; display:flex; flex-direction:column;}
+#sketch3dViewportWrap{position:relative; flex:1; min-height:0;}
+#sketch3dCanvas{position:absolute; inset:0; width:100%; height:100%; touch-action:none;}
+#sketch3dLoading{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--muted); font-size:13px;}
+#sketch3dControls{background:var(--panel); border-top:1px solid var(--edge); padding:12px 14px; flex-shrink:0;}
+#sketch3dControls h4{margin:0 0 6px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px;}
+#extrudeDepthSlider{width:100%; accent-color:var(--accent); margin-bottom:10px;}
+#sketch3dButtonRow{display:flex; gap:8px; margin-top:10px;}
+#sketch3dButtonRow button{flex:1; border-radius:8px; padding:10px; font-size:13px; font-weight:600; cursor:pointer; border:none;}
+#cancelSketch3DBtn{background:var(--panel-2); color:var(--text); border:1px solid var(--edge) !important;}
+#placeModel3DBtn{background:var(--accent); color:#fff;}
+
 svg{stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
