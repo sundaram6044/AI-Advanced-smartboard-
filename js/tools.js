@@ -46,6 +46,7 @@ fullColorPicker.addEventListener('input', e=>{ activeStyle().color = e.target.va
 styleRow.addEventListener('click', e=>{
   const btn = e.target.closest('.styleBtn'); if(!btn) return;
   currentTool = btn.dataset.style; currentShape = null;
+  clearSelection();
   document.querySelectorAll('.styleBtn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   shapesBtn.classList.remove('active');
@@ -60,6 +61,7 @@ penSizeSlider.addEventListener('input', e=>{
 
 penStudioBtn.addEventListener('click', ()=>{
   exitAiSelectMode();
+  clearSelection();
   if(!['pen','brush','highlighter','marker'].includes(currentTool)){ currentTool = 'pen'; }
   shapesBtn.classList.remove('active');
   penStudioBtn.classList.add('active');
@@ -75,6 +77,7 @@ document.getElementById('drawTools').addEventListener('click', e=>{
   const btn = e.target.closest('[data-tool]'); if(!btn) return;
   exitAiSelectMode();
   currentTool = btn.dataset.tool; currentShape = null;
+  clearSelection();
   document.querySelectorAll('#drawTools .tool[data-tool]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   penStudioBtn.classList.remove('active');
@@ -98,6 +101,7 @@ shapesBtn.addEventListener('click', ()=>{
 shapeGrid.addEventListener('click', e=>{
   const btn = e.target.closest('[data-shape]'); if(!btn) return;
   currentTool = 'shape'; currentShape = btn.dataset.shape;
+  clearSelection();
   document.querySelectorAll('#shapeGrid .styleBtn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   shapesBtn.classList.add('active');
@@ -147,4 +151,3 @@ bgFileInput.addEventListener('change', e=>{
   };
   reader.readAsDataURL(file); bgFileInput.value='';
 });
-
