@@ -20,6 +20,16 @@
       <canvas id="board"></canvas>
       <div id="aiSelectBox"></div>
 
+      <div id="selectionBar">
+        <span id="selectionCount"></span>
+        <button id="selBoldBtn" title="Bold (applies to selected notes)"><b>B</b></button>
+        <button id="selItalicBtn" title="Italic (applies to selected notes)"><i>I</i></button>
+        <button id="selDeleteBtn" title="Delete selected">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+        <button id="selDeselectBtn" title="Deselect">✕</button>
+      </div>
+
       <div class="flyout" id="penFlyout">
         <h4>Pen style</h4>
         <div class="styleRow" id="styleRow">
@@ -98,40 +108,34 @@
       <div id="aiMenu">
         <div class="aiTabRow">
           <button class="aiTabBtn active" data-aitab="equation">Equation → Graph</button>
-          <button class="aiTabBtn" data-aitab="notes">Handwriting → Notes</button>
+          <button class="aiTabBtn" data-aitab="notes">Notes</button>
           <button class="aiTabBtn" data-aitab="sketch3d">Sketch → 3D</button>
         </div>
 
         <div id="equationPanel" class="aiTabPanel open">
           <input type="text" id="equationInput" placeholder="e.g. x^2 - 3, sin(x)*2, 1/x">
           <div class="chipRow" id="chipRow"></div>
+          <div class="keypadGrid" id="keypadGrid"></div>
           <button id="plotBtn">Plot on board</button>
-          <button class="aiOption" id="aiEquationScanBtn" style="margin-top:8px;">
-            Scan handwritten equation
-            <span class="small">Drag a box around it after tapping this</span>
-          </button>
         </div>
 
         <div id="notesPanel" class="aiTabPanel">
           <textarea id="notesInput" rows="3" placeholder="Type your notes here…"></textarea>
-          <h4 style="margin-top:10px;">Style (pick one)</h4>
-          <div class="fontGrid" id="fontGrid"></div>
+          <h4 style="margin-top:10px;">Font</h4>
+          <div class="swatchRow" id="familyRow"></div>
+          <h4>Style</h4>
+          <div class="styleToggleRow">
+            <button class="styleToggleBtn" id="noteBoldBtn"><b>Bold</b></button>
+            <button class="styleToggleBtn" id="noteItalicBtn"><i>Italic</i></button>
+          </div>
+          <p class="panelHint" id="notePreview">The quick brown fox</p>
           <button id="placeNoteBtn">Add to board</button>
-          <button class="aiOption" id="aiNotesScanBtn" style="margin-top:8px;">
-            Scan handwriting → clean text
-            <span class="small">Drag a box around your handwriting after tapping this</span>
-          </button>
         </div>
 
         <div id="sketch3dPanel" class="aiTabPanel">
           <p class="panelHint">Draw any closed outline on the board — a doodle, a rough polygon, anything — then tap below. It doesn't need to be a recognized shape.</p>
           <button id="startSketch3DBtn">Start sketching</button>
           <p class="panelHint" id="sketch3dStatus"></p>
-        </div>
-
-        <div id="keySectionToggle">Have a Gemini API key? Enable handwriting scanning</div>
-        <div id="keySection">
-          <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key">
         </div>
       </div>
     </div>
@@ -147,6 +151,9 @@
       </button>
       <button class="tool" data-tool="select" title="Select / Move — drag any drawing to reposition it">
         <svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg>
+      </button>
+      <button class="tool" data-tool="lasso" title="Lasso — circle multiple drawings to select them as a group">
+        <svg viewBox="0 0 24 24"><path d="M12 3C6 3 3 7 3 10c0 2.5 2 4.5 4.5 4.9L6 20l3-2 1 2 1-2.2c4.6-.3 8-3.3 8-7.3C19 7 16 3 12 3z"/><circle cx="7.5" cy="14" r="1"/></svg>
       </button>
     </div>
 
@@ -212,6 +219,7 @@
 <script src="js/core.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/drawing-events.js"></script>
+<script src="js/selection.js"></script>
 <script src="js/pages.js"></script>
 <script src="js/ai-graph.js"></script>
 <script src="js/notes.js"></script>
