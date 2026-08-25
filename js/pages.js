@@ -77,19 +77,19 @@ function refreshThumb(i){ paintThumb(i); }
 
 function switchPage(i){
   if(i===pageIndex) return;
-  pageIndex=i; redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+  pageIndex=i; undoStack=[]; redoStack=[]; selectedObjects=[]; updateSelectionBar(); redraw(); drawBackground(); renderPageStrip();
 }
 
 function deletePage(i){
   if(pages.length<=1) return;
   pages.splice(i,1);
   if(pageIndex>=pages.length) pageIndex=pages.length-1; else if(i<pageIndex) pageIndex--;
-  redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+  undoStack=[]; redoStack=[]; selectedObjects=[]; updateSelectionBar(); redraw(); drawBackground(); renderPageStrip();
 }
 
 addPageBtn.addEventListener('click', ()=>{
   pages.push(newPage()); pageIndex=pages.length-1;
-  redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+  undoStack=[]; redoStack=[]; selectedObjects=[]; updateSelectionBar(); redraw(); drawBackground(); renderPageStrip();
 });
 
 // ---------------- Prev / Next quick navigation ----------------
@@ -101,25 +101,15 @@ nextPageBtn.addEventListener('click', ()=>{
 });
 
 // ---------------- Duplicate current page ----------------
-// Deep-copies coordinates/points (so moving a shape on the copy never
-// affects the original) but graph objects keep sharing their compiled
-// function — functions can't be cloned and don't need to be, they're pure.
-function clonePageObjects(objects){
-  return objects.map(o=>{
-    const copy = { ...o };
-    if(o.points) copy.points = o.points.map(pt=>({ ...pt }));
-    return copy;
-  });
-}
 duplicatePageBtn.addEventListener('click', ()=>{
   const src = currentPage();
   const copy = {
-    objects: clonePageObjects(src.objects),
+    objects: snapshotObjects(src.objects),
     background: { ...src.background }
   };
   pages.splice(pageIndex+1, 0, copy);
   pageIndex = pageIndex+1;
-  redoStack=[]; redraw(); drawBackground(); renderPageStrip();
+  undoStack=[]; redoStack=[]; selectedObjects=[]; updateSelectionBar(); redraw(); drawBackground(); renderPageStrip();
   showToast('Page duplicated.', 2000);
 });
 
@@ -137,3 +127,4 @@ exportPageBtn.addEventListener('click', ()=>{
   link.click();
   showToast('Page saved as an image.', 2000);
 });
+
