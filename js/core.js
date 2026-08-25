@@ -22,19 +22,29 @@ const QUICK_COLORS = ['#111318','#E63946','#2A9D8F','#4C7FFF','#F4A300','#8E44AD
 const BG_COLORS = ['#FFFFFF','#F7F3E9','#E8F0FE','#111318','#0B3D2E','#1B1F3B'];
 
 // ---------- Tool / interaction state ----------
-let redoStack = [];
-let currentTool = 'pen';       // pen | brush | highlighter | marker | eraser | select | shape
+let currentTool = 'pen';       // pen | brush | highlighter | marker | eraser | select | lasso | shape
 let currentShape = null;
 let polyPoints = [];           // polygon is a tap-sequence tool, kept single-touch on purpose
 
-// AI equation-graphing state (used by ai-graph.js)
+// Undo/redo — snapshot-based: each entry is a full copy of the page's
+// objects array from just before a change. This is what makes group
+// actions (moving/deleting several lassoed objects at once, or even a
+// single eraser stroke that removes several strokes) undo in ONE step
+// instead of needing special-case logic per action type.
+let undoStack = [];
+let redoStack = [];
+
+// Multi-select (lasso tool) — objects currently selected, by reference.
+let selectedObjects = [];
+
+// AI equation-graphing state (used by ai-graph.js) — fully offline now,
+// equations are typed/keypad-entered, never scanned from a photo.
 let aiSelectMode = false;
-let aiSelectPurpose = 'typed'; // 'typed' or 'ocr'
+let aiSelectPurpose = 'typed'; // 'typed' (equation) or 'note' (notes text)
 let pendingExprFn = null, pendingExprText = '';
 
 // Sketch → 3D capture state (see js/sketch3d.js)
 let sketch3dMode = false;
-let geminiKey = '';
 
 // Each pen style remembers its own last color + thickness
 const penStyles = {
@@ -48,21 +58,41 @@ function activeStyle(){ return penStyles[currentTool] || penStyles.pen; }
 // Line style applied to the NEXT shape you draw — 'solid' or 'dashed'
 let shapeLineStyle = 'solid';
 
-// Font style for the Notes feature (10 offline-safe combinations — no
-// internet/CDN needed, so this keeps working even with no connectivity).
-const NOTE_FONTS = [
-  { id:'script',      label:'Script',      css:"italic 400 1em 'Brush Script MT', cursive" },
-  { id:'scriptBold',  label:'Bold Script', css:"italic 700 1em 'Brush Script MT', cursive" },
-  { id:'italicSerif', label:'Italic',      css:"italic 400 1em Georgia, 'Times New Roman', serif" },
-  { id:'serif',       label:'Classic',     css:"normal 400 1em Georgia, 'Times New Roman', serif" },
-  { id:'serifBold',   label:'Formal Bold', css:"normal 700 1em Georgia, 'Times New Roman', serif" },
-  { id:'sans',        label:'Modern',      css:"normal 400 1em 'Segoe UI', Arial, sans-serif" },
-  { id:'sansItalic',  label:'Italic Sans', css:"italic 400 1em 'Segoe UI', Arial, sans-serif" },
-  { id:'sansBold',    label:'Bold Notes',  css:"normal 700 1em 'Segoe UI', Arial, sans-serif" },
-  { id:'rounded',      label:'Friendly',    css:"normal 400 1em ui-rounded, 'Segoe UI', sans-serif" },
-  { id:'mono',        label:'Typewriter',  css:"normal 400 1em 'Courier New', monospace" }
+// Font FAMILY choices for the Notes feature — each one is then combinable
+// with independent Bold and Italic toggles, so e.g. "Script" + Bold + Italic
+// all apply together rather than picking one fixed preset. All built-in
+// system font families, so this works with zero internet connectivity.
+const NOTE_FAMILIES = [
+  { id:'script', label:'Script',  css:"'Brush Script MT', cursive" },
+  { id:'serif',  label:'Classic', css:"Georgia, 'Times New Roman', serif" },
+  { id:'sans',   label:'Modern',  css:"'Segoe UI', Arial, sans-serif" },
+  { id:'rounded',label:'Friendly',css:"ui-rounded, 'Segoe UI', sans-serif" },
+  { id:'mono',   label:'Typewriter', css:"'Courier New', monospace" }
 ];
-function findNoteFont(id){ return NOTE_FONTS.find(f=>f.id===id) || NOTE_FONTS[3]; }
+function findNoteFamily(id){ return NOTE_FAMILIES.find(f=>f.id===id) || NOTE_FAMILIES[1]; }
+// Builds a real CSS font shorthand from a family + independent bold/italic flags.
+function composeNoteFontCss(familyId, bold, italic, sizePx){
+  const fam = findNoteFamily(familyId);
+  return `${italic?'italic':'normal'} ${bold?'700':'400'} ${sizePx}px ${fam.css}`;
+}
+
+// ---------- Undo/redo snapshots ----------
+// Deep-copies an object's coordinates/points so a snapshot is fully
+// independent of the live object (moving the live one later never
+// changes what's stored in the snapshot). Non-serializable bits — a
+// graph's compiled function, a placed image — are pure/immutable once
+// created, so it's safe (and necessary) to just share those references.
+function cloneObject(o){
+  const copy = { ...o };
+  if(o.points) copy.points = o.points.map(pt=>({ ...pt }));
+  return copy;
+}
+function snapshotObjects(objects){ return objects.map(cloneObject); }
+function pushUndoSnapshot(){
+  undoStack.push(snapshotObjects(currentPage().objects));
+  if(undoStack.length>50) undoStack.shift();
+  redoStack = [];
+}
 
 // ---------- Canvas sizing ----------
 function resize(){
@@ -182,11 +212,10 @@ function drawShapePreview(p1,p2){
 function drawNoteObj(o){
   const left = Math.min(o.x1,o.x2), top = Math.min(o.y1,o.y2);
   const w = Math.abs(o.x2-o.x1), h = Math.abs(o.y2-o.y1);
-  const fontDef = findNoteFont(o.fontId);
   const fontPx = Math.max(14, Math.min(40, w/14));
   ctx.save();
   ctx.fillStyle = o.color || '#111318';
-  ctx.font = fontDef.css.replace('1em', fontPx+'px');
+  ctx.font = composeNoteFontCss(o.familyId, !!o.bold, !!o.italic, fontPx);
   ctx.textBaseline = 'top';
 
   const words = (o.text||'').split(/\s+/);
@@ -273,4 +302,18 @@ function drawModel3DObj(o){
 function redraw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   currentPage().objects.forEach(o=>{ if(o.type==='stroke') drawStroke(o); else drawShapeObj(o); });
+  drawSelectionHighlights();
+}
+
+// Dashed accent-colored box around each currently lassoed object, so it's
+// obvious what's selected before you move/delete/style it.
+function drawSelectionHighlights(){
+  if(!selectedObjects.length) return;
+  ctx.save();
+  ctx.strokeStyle = '#4C7FFF'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+  selectedObjects.forEach(o=>{
+    const bb = objectBBox(o);
+    ctx.strokeRect(bb.x1-6, bb.y1-6, (bb.x2-bb.x1)+12, (bb.y2-bb.y1)+12);
+  });
+  ctx.restore();
 }
