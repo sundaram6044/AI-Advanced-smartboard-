@@ -204,8 +204,8 @@ placeModel3DBtn.addEventListener('click', ()=>{
   const img = new Image();
   img.onload = ()=>{
     const obj = { type:'model3d', image:img, x1:capturedBBox.x1, y1:capturedBBox.y1, x2:capturedBBox.x2, y2:capturedBBox.y2 };
+    pushUndoSnapshot();
     currentPage().objects.push(obj);
-    redoStack = [];
     redraw(); refreshThumb(pageIndex);
     closeSketch3DModal();
     showToast('3D object placed on the board.', 2200);
