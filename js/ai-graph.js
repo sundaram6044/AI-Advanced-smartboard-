@@ -1,23 +1,21 @@
 /* ===================================================================
    ai-graph.js
-   The purple AI button: typing an equation (fully offline) or
-   optionally scanning handwriting with a free Gemini API key.
-   Edit THIS file for: equation presets, graphing behavior, the
-   offline math parser, or the optional handwriting-scan feature.
+   The purple AI button's "Equation → Graph" tab: type or tap-build an
+   equation using the on-screen math keypad, drag a box on the board,
+   done. 100% offline — no API key, no network call, ever.
+   Edit THIS file for: equation presets, the keypad, graphing behavior,
+   or the offline math parser itself.
    =================================================================== */
 
 const aiFab = document.getElementById('aiFab');
 const aiMenu = document.getElementById('aiMenu');
 const equationInput = document.getElementById('equationInput');
 const chipRow = document.getElementById('chipRow');
+const keypadGrid = document.getElementById('keypadGrid');
 const plotBtn = document.getElementById('plotBtn');
-const keySectionToggle = document.getElementById('keySectionToggle');
-const keySection = document.getElementById('keySection');
-const geminiKeyInput = document.getElementById('geminiKeyInput');
-const aiEquationScanBtn = document.getElementById('aiEquationScanBtn');
 const aiSelectBox = document.getElementById('aiSelectBox');
 
-// Quick-tap equation presets — tap one to drop it into the input box
+// Quick-tap equation presets — tap one to drop it straight into the input box
 const PRESETS = ['x','x^2','x^3','sin(x)','cos(x)','sqrt(x)','1/x','e^x','log(x)','2x+3','x^2-3'];
 PRESETS.forEach(p=>{
   const c = document.createElement('button'); c.className='chip'; c.textContent=p;
@@ -25,29 +23,58 @@ PRESETS.forEach(p=>{
   chipRow.appendChild(c);
 });
 
-geminiKeyInput.addEventListener('input', e=>{ geminiKey = e.target.value.trim(); });
-keySectionToggle.addEventListener('click', ()=> keySection.classList.toggle('open'));
+// On-screen math keypad — inserts at the cursor position rather than always
+// appending at the end, so you can build up an expression naturally without
+// fighting your phone's regular keyboard for symbols like ^ or √.
+const KEYPAD_KEYS = [
+  '7','8','9','/','(',
+  '4','5','6','*',')',
+  '1','2','3','-','x',
+  '0','.','^','+','π',
+  'sin(','cos(','tan(','√(','⌫'
+];
+KEYPAD_KEYS.forEach(k=>{
+  const b = document.createElement('button');
+  b.className = 'keypadKey';
+  b.textContent = k;
+  b.addEventListener('click', ()=>{
+    if(k==='⌫'){ backspaceEquation(); return; }
+    insertAtCursor(equationInput, k==='π' ? 'pi' : (k==='√(' ? 'sqrt(' : k));
+  });
+  keypadGrid.appendChild(b);
+});
+
+function insertAtCursor(input, text){
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0,start) + text + input.value.slice(end);
+  const newPos = start + text.length;
+  input.focus();
+  input.setSelectionRange(newPos, newPos);
+}
+function backspaceEquation(){
+  const start = equationInput.selectionStart ?? equationInput.value.length;
+  const end = equationInput.selectionEnd ?? equationInput.value.length;
+  if(start===end && start>0){
+    equationInput.value = equationInput.value.slice(0,start-1) + equationInput.value.slice(start);
+    equationInput.focus(); equationInput.setSelectionRange(start-1, start-1);
+  } else if(start!==end){
+    equationInput.value = equationInput.value.slice(0,start) + equationInput.value.slice(end);
+    equationInput.focus(); equationInput.setSelectionRange(start, start);
+  }
+}
 
 aiFab.addEventListener('click', ()=>{ closeAllFlyouts('aiMenu'); aiMenu.classList.toggle('open'); });
 
-// ---- Offline path: type an equation, no API needed ----
 plotBtn.addEventListener('click', ()=>{
   const text = equationInput.value.trim();
-  if(!text){ showToast('Type an equation first, e.g. x^2 - 3'); return; }
+  if(!text){ showToast('Type or tap out an equation first, e.g. x^2 - 3'); return; }
   try{
     pendingExprFn = compileExpr(text);
     pendingExprFn(1); // sanity check — throws if the expression is invalid
   }catch(err){ showToast('Could not understand that equation: ' + err.message, 4000); return; }
   pendingExprText = text;
   aiSelectPurpose = 'typed';
-  aiMenu.classList.remove('open');
-  enterAiSelectMode();
-});
-
-// ---- Optional path: scan a photo of handwriting via Gemini (needs a free key) ----
-aiEquationScanBtn.addEventListener('click', ()=>{
-  if(!geminiKey){ showToast('Paste your Gemini API key above first.', 3500); return; }
-  aiSelectPurpose = 'ocr';
   aiMenu.classList.remove('open');
   enterAiSelectMode();
 });
@@ -66,78 +93,22 @@ function updateAiSelectBox(p1,p2){
   aiSelectBox.style.width=w+'px'; aiSelectBox.style.height=h+'px';
 }
 
-// Crops the current page (background + strokes) inside the given box to a
-// small offscreen canvas and returns it as a base64 PNG. Shared by both the
-// equation-scan and notes-scan features.
-function cropBoardToBase64(left, top, w, h){
-  const dpr = window.devicePixelRatio||1;
-  const crop = document.createElement('canvas');
-  crop.width = w*dpr; crop.height = h*dpr;
-  const cctx = crop.getContext('2d');
-  cctx.drawImage(bgCanvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
-  cctx.drawImage(canvas, left*dpr, top*dpr, w*dpr, h*dpr, 0,0, w*dpr, h*dpr);
-  return crop.toDataURL('image/png').split(',')[1];
-}
-
-async function finishAiSelect(p1,p2){
+function finishAiSelect(p1,p2){
   exitAiSelectMode();
   const left=Math.min(p1.x,p2.x), top=Math.min(p1.y,p2.y), w=Math.abs(p2.x-p1.x), h=Math.abs(p2.y-p1.y);
   if(w<20 || h<20){ showToast('Selection too small — try again.'); return; }
-
-  if(aiSelectPurpose==='typed'){
-    const obj = { type:'graph', color:'#2A5CE6', size:4, x1:left,y1:top,x2:left+w,y2:top+h, xRange:8, fn:pendingExprFn, expr:pendingExprText };
-    currentPage().objects.push(obj); redoStack=[]; redraw(); refreshThumb(pageIndex);
-    showToast('Plotted: y = ' + pendingExprText, 2500);
-    return;
-  }
 
   if(aiSelectPurpose==='note'){
     placeNoteObject(left, top, w, h);
     return;
   }
 
-  if(aiSelectPurpose==='noteOcr'){
-    const base64 = cropBoardToBase64(left, top, w, h);
-    showToast('Reading your handwriting…', 60000);
-    try{
-      const text = await recognizeHandwritingText(base64);
-      placeNoteObject(left, top, w, h, text);
-      showToast('Recognized text added.', 2500);
-    }catch(err){
-      showToast('Scan failed (' + err.message + '). Try typing your note instead.', 4500);
-    }
-    return;
-  }
-
-  // aiSelectPurpose === 'ocr' — equation photo scan (optional, needs key)
-  const base64 = cropBoardToBase64(left, top, w, h);
-  showToast('Reading your equation…', 60000);
-  try{
-    const expr = await recognizeEquation(base64);
-    const fn = compileExpr(expr);
-    const obj = { type:'graph', color:'#2A5CE6', size:4, x1:left,y1:top,x2:left+w,y2:top+h, xRange:8, fn, expr };
-    currentPage().objects.push(obj); redoStack=[]; redraw(); refreshThumb(pageIndex);
-    showToast('Recognized: ' + expr, 3000);
-  }catch(err){
-    showToast('Scan failed (' + err.message + '). Try typing the equation instead.', 4500);
-  }
-}
-
-// Calls Gemini's vision API. Model name may change over time —
-// check aistudio.google.com for the current free-tier model id if this stops working.
-async function recognizeEquation(base64Png){
-  const model = 'gemini-2.5-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-  const body = { contents: [{ parts: [
-    { text: 'This image shows a handwritten math equation, function of x. Reply with ONLY the right-hand side expression in plain text using ^ for powers, * for multiplication, and function names sin, cos, tan, sqrt, abs, log, ln, exp. No LaTeX, no explanation, no equals sign.' },
-    { inline_data: { mime_type: 'image/png', data: base64Png } }
-  ]}]};
-  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('API error ' + res.status);
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if(!text) throw new Error('empty response');
-  return text.trim().replace(/^[a-zA-Z()]*=\s*/,'').replace(/`/g,'');
+  // aiSelectPurpose === 'typed' — the only equation path, fully offline
+  const obj = { type:'graph', color:'#2A5CE6', size:4, x1:left,y1:top,x2:left+w,y2:top+h, xRange:8, fn:pendingExprFn, expr:pendingExprText };
+  pushUndoSnapshot();
+  currentPage().objects.push(obj);
+  redraw(); refreshThumb(pageIndex);
+  showToast('Plotted: y = ' + pendingExprText, 2500);
 }
 
 // ---------- Safe offline math expression compiler (no eval, runs 100% locally) ----------
