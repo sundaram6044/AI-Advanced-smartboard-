@@ -127,4 +127,3 @@ exportPageBtn.addEventListener('click', ()=>{
   link.click();
   showToast('Page saved as an image.', 2000);
 });
-
